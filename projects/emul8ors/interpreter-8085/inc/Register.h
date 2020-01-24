@@ -10,6 +10,7 @@ public:
     Register();
     Register(const Byte &);
     Register(const Register &);
+    ~Register();
 };
 
 #endif
