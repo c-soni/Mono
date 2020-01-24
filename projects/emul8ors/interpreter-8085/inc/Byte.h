@@ -8,7 +8,7 @@ class Byte
 public:
     Byte();
     explicit Byte(const std::uint8_t);
-    Byte(const Byte &other);
+    Byte(const Byte &);
     ~Byte();
 }
 
