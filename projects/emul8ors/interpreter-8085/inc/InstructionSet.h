@@ -1,6 +1,9 @@
 #ifndef INTERPRETER_8085_INSTRUCTION_SET_H
 #define INTERPRETER_8085_INSTRUCTION_SET_H
 
+namespace intel_8085
+{
+
 enum class opcodes : std::uint8_t
 {
     NOP         = 0x00,
@@ -250,5 +253,7 @@ enum class opcodes : std::uint8_t
     CPI         = 0xFE,
     RST_7       = 0xFF
 };
+
+}
 
 #endif
