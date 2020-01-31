@@ -15,6 +15,9 @@ public:
     Register(const Byte&);
     Register(const Register&);
     ~Register();
+
+    const Byte& Content() const;
+    void Content(const Byte&);
 };
 
 }

@@ -1,6 +1,8 @@
 #ifndef INTERPRETER_8085_BYTE_H
 #define INTERPRETER_8085_BYTE_H
 
+#include <cinttypes>
+
 namespace intel_8085
 {
 
@@ -10,7 +12,7 @@ class Byte
 
 public:
     Byte();
-    Byte(const std::uint8_t);
+    explicit Byte(const std::uint8_t);
     Byte(const Byte&);
     ~Byte();
 };
