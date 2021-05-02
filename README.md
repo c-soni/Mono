@@ -1,2 +1,2 @@
 # Mono
-A single massive repository for all projects.
+A single repository for all pet projects.
