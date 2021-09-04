@@ -6,7 +6,7 @@ conan_basic_setup()
 include(cmake/SetCompilerWarnings.cmake)
 
 # add the executable
-add_executable(app src/try.cpp)
+add_executable(app src/main.cpp)
 add_library(project_options INTERFACE)
 
 target_compile_features(project_options INTERFACE cxx_std_20)
