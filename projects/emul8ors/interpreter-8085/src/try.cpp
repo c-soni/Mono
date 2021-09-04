@@ -1,5 +1,5 @@
 #include <iostream>
-#include "InstructionSet.h"
+#include "instruction_set.h"
 
 namespace intel_8085
 {
