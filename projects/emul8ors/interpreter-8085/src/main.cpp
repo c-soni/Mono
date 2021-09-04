@@ -1,6 +1,6 @@
 #include "spdlog/spdlog.h"
 
-#include "instruction_set.h"
+#include "instruction_set.hpp"
 
 auto main() -> int {
 
