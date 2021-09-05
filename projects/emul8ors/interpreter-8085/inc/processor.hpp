@@ -19,8 +19,8 @@ public:
 
     // ~Processor()
 
-    auto LoadProgram(const std::string &filename) noexcept -> void {
-        ProgramLoader::Load(filename);
+    [[nodiscard]] auto LoadProgram(const std::string &filename) noexcept -> bool {
+        return ProgramLoader::Load(filename);
     }
 
     // Run()

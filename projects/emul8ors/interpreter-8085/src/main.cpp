@@ -5,6 +5,7 @@
 
 auto main() -> int {
     intel_8085::Processor processor;
-    processor.LoadProgram("path/to/some/program/file.program");
+    bool success = processor.LoadProgram("path/to/some/program/file.program");
+    spdlog::info("Success parsing program: {}", success);
     return 0;
 }

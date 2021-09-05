@@ -10,8 +10,9 @@ namespace intel_8085 {
 class ProgramLoader {
 
 public:
-    static auto Load(const std::string &filename) noexcept -> void {
+    [[nodiscard]] static auto Load(const std::string &filename) noexcept -> bool {
         spdlog::info("Loading program from file: {}", filename);
+        return true;
     }
 
 private:
