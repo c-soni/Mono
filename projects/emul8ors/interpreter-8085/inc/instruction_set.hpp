@@ -1,6 +1,8 @@
 #ifndef INTERPRETER_8085_INSTRUCTION_SET_HPP
 #define INTERPRETER_8085_INSTRUCTION_SET_HPP
 
+#include <cstdint>
+
 namespace intel_8085 {
 
 enum class opcodes : std::uint8_t {

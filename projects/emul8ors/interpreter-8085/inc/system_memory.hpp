@@ -12,6 +12,10 @@ namespace intel_8085 {
 class SystemMemory {
 
 public:
+    [[nodiscard]] constexpr auto GetSize() const noexcept -> std::size_t {
+        return memory_.size();
+    }
+
 private:
     [[maybe_unused]] std::array<Byte, 0x10000> memory_;
 };
