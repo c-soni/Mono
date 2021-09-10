@@ -12,5 +12,6 @@ auto main(int argc, char **argv) -> int {
     } else {
         spdlog::error("Expected exactly two arguments and received {:d}", argc);
     }
+    processor.DumpInfo();
     return 0;
 }

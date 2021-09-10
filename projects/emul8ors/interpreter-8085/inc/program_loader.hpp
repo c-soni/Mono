@@ -13,8 +13,7 @@ namespace intel_8085 {
 class ProgramLoader {
 
 public:
-    [[nodiscard]] static auto Load(
-        const std::string &filename, SystemMemory &memory) noexcept -> bool {
+    [[nodiscard]] static auto Load(const std::string &filename, SystemMemory &memory) noexcept -> bool {
         if (ValidateFileType(filename)) {
             spdlog::info("Loading program from file: {}", filename);
             spdlog::debug("Available memory size: {} Bytes", memory.GetSize());
@@ -24,10 +23,8 @@ public:
     }
 
 private:
-    [[nodiscard]] static auto ValidateFileType(
-        const std::string &filename) noexcept -> bool {
-        return std::filesystem::exists(filename)
-            && filename.ends_with(".program");
+    [[nodiscard]] static auto ValidateFileType(const std::string &filename) noexcept -> bool {
+        return std::filesystem::exists(filename) && filename.ends_with(".program");
     }
 };
 

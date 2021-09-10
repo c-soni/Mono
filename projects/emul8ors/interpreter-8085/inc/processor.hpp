@@ -19,14 +19,17 @@ public:
 
     // ~Processor()
 
-    [[nodiscard]] auto LoadProgram(const std::string &filename) noexcept
-        -> bool {
+    // LoadProgram()
+    [[nodiscard]] auto LoadProgram(const std::string &filename) noexcept -> bool {
         return ProgramLoader::Load(filename, systemMemory_);
     }
 
     // Run()
 
     // DumpInfo()
+    [[maybe_unused]] auto DumpInfo(std::ostream &outStream = std::cout) const noexcept -> bool {
+        return systemMemory_.DumpContent(outStream);
+    }
 
     // Shutdown()
 
@@ -35,7 +38,7 @@ private:
     [[maybe_unused]] ExecutionUnit executionUnit_;
 
     // Memory
-    [[maybe_unused]] SystemMemory systemMemory_;
+    SystemMemory systemMemory_;
 
     // Registers
     Register<Byte> a_;
