@@ -1,0 +1,20 @@
+data_begin
+0x8000      // Starting address for data section
+0x05        // 5 bytes of data
+0x31        // ASCII code for '1'
+0x32        // ASCII code for '2'
+0x33        // ASCII code for '3'
+0x34        // ASCII code for '4'
+0x35        // ASCII code for '5'
+data_end
+
+
+
+code_begin
+0x1000          // Starting address for code section
+MVI_A,0x05      // Move data 0x05 to Accumulator
+ADI,0x03        // Add data 0x03 to Accumulator (res 0x08)
+RAL             // Rotate Accumulator left (res 0x10)
+STA,0x00,0x20   // Store Accumulator data at location 0x2000
+HLT             // Stop the program
+code_end

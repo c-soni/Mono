@@ -20,7 +20,7 @@ class SystemMemory {
 public:
     [[nodiscard]] constexpr auto GetSize() const noexcept -> std::size_t { return memory_.size(); }
 
-    auto DumpContent(std::ostream &outStream = std::cout) const noexcept -> bool {
+    [[nodiscard]] auto DumpContent(std::ostream &outStream = std::clog) const noexcept -> bool {
         outStream << "Dumping the file content:\n";
 
         constexpr const char *tableHeader
