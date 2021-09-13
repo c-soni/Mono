@@ -21,7 +21,7 @@ public:
 
     // LoadProgram()
     [[nodiscard]] auto LoadProgram(const std::string &filename) noexcept -> bool {
-        return ProgramLoader::Load(filename, systemMemory_);
+        return ProgramLoader::Load(systemMemory_, filename);
     }
 
     // Run()

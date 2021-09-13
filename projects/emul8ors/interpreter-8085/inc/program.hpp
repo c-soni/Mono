@@ -6,13 +6,11 @@
 
 namespace intel_8085 {
 
-struct DataBlock {
-    std::uint16_t             startingAddress = 0x0000;
-    std::vector<std::uint8_t> data            = {};
-};
+enum class SectionType : std::uint8_t { DataSection = 0x01, CodeSection = 0x02 };
 
 struct DataSection {
-    std::vector<DataBlock> dataBlocks = {};
+    std::uint16_t             startingAddress = 0x0000;
+    std::vector<std::uint8_t> data            = {};
 };
 
 struct Instruction {
@@ -23,15 +21,14 @@ struct Instruction {
     std::uint16_t opcode   = 0x0000;
     std::uint16_t operand1 = 0x0000;
     std::uint16_t operand2 = 0x0000;
-};
 
-struct InstructionBlock {
-    std::uint16_t            startingAddress = 0x0000;
-    std::vector<Instruction> instructions    = {};
+    Instruction(std::uint16_t opcode, std::uint16_t operand1, std::uint16_t operand2)
+        : opcode(opcode), operand1(operand1), operand2(operand2) {}
 };
 
 struct CodeSection {
-    std::vector<InstructionBlock> instructionBlocks = {};
+    std::uint16_t            startingAddress = 0x0000;
+    std::vector<Instruction> instructions    = {};
 };
 
 // The Program struct can be made simpler, but for demo/debugging
