@@ -9,7 +9,7 @@ auto main(int argc, char **argv) -> int {
         bool success = processor.LoadProgram(argv[1]);
         spdlog::info("Success parsing program {}: {}", argv[1], success);
     } else {
-        spdlog::error("Expected exactly two arguments and received {:d}", argc);
+        spdlog::error("Expected exactly 2 arguments and received {:d}", argc);
     }
     return 0;
 }
