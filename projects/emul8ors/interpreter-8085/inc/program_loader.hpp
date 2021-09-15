@@ -20,7 +20,6 @@ public:
     [[nodiscard]] static auto Load(SystemMemory &memory, const std::string &filename) noexcept -> bool {
         if (ValidateFileType(filename)) {
             spdlog::info("Loading program from file: {}", filename);
-            spdlog::info("Available memory size: {} Bytes", memory.GetSize());
 
             std::fstream            programStream(filename, std::fstream::in);
             std::string             line;
@@ -36,7 +35,7 @@ public:
             }
 
             Program program;
-            if (CreateProgram(program, tokens) && LoadProgramIntoMemory(memory, program)) {
+            if (CreateProgram(program, tokens) && LoadProgram(memory, program)) {
                 spdlog::info("Loaded a valid program into memory");
                 spdlog::debug("Any tokens remaining to be processed: {}", !tokens.empty());
 
@@ -61,9 +60,38 @@ public:
         return false;
     }
 
-    [[nodiscard]] static auto LoadProgramIntoMemory(SystemMemory &, const Program &) noexcept -> bool { return true; }
+    [[nodiscard]] static auto LoadProgram(SystemMemory &memory, const Program &program) noexcept -> bool {
+        return VerifyProgram(program) && LoadProgramIntoMemory(memory, program);
+    }
 
 private:
+    [[nodiscard]] static auto LoadProgramIntoMemory(SystemMemory &memory, const Program &program) noexcept -> bool {
+        std::copy_n(program.dataSection.data.begin(), program.dataSection.data.size(),
+            memory.GetIterator(program.dataSection.startingAddress));
+        std::vector<std::uint8_t> codeSectionCondensed;
+        for (const auto &instruction : program.codeSection.instructions) {
+            if (instruction.opcode & 0x0100) {
+                codeSectionCondensed.push_back(static_cast<uint8_t>(instruction.opcode & 0xFF));
+            }
+            if (instruction.operand1 & 0x0100) {
+                codeSectionCondensed.push_back(static_cast<uint8_t>(instruction.operand1 & 0xFF));
+            }
+            if (instruction.operand2 & 0x0100) {
+                codeSectionCondensed.push_back(static_cast<uint8_t>(instruction.operand2 & 0xFF));
+            }
+        }
+        std::copy_n(codeSectionCondensed.begin(), codeSectionCondensed.size(),
+            memory.GetIterator(program.codeSection.startingAddress));
+        return true;
+    }
+
+    [[nodiscard]] static auto VerifyProgram(const Program &program) noexcept -> bool {
+        return program.dataSection.startingAddress >= 0x8000 && program.dataSection.startingAddress < 0xF000
+            && program.dataSection.data.size() < 0xEFFF - 0x8000 && program.codeSection.startingAddress >= 0x1000
+            && program.codeSection.startingAddress < 0x8000
+            && program.codeSection.instructions.size() < 0x7FFF - 0x1000;
+    }
+
     // Owns the token queue passed in, will empty the queue before returning
     // Fills the program struct from the tokens passed in
     [[nodiscard]] static auto CreateProgram(Program &program, std::queue<std::string> &tokens) noexcept -> bool {

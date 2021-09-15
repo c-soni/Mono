@@ -27,8 +27,9 @@ public:
     // Run()
 
     // DumpInfo()
-    [[maybe_unused]] auto DumpInfo(std::ostream &outStream = std::cout) const noexcept -> bool {
-        return systemMemory_.DumpContent(outStream);
+    auto DumpInfo(std::uint16_t startAddress = 0x0000, std::uint16_t endAddress = 0xFFFF,
+        std::ostream &outStream = std::clog) const noexcept -> void {
+        systemMemory_.DumpContent(startAddress, endAddress, outStream);
     }
 
     // Shutdown()
