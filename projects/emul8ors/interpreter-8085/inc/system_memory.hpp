@@ -11,13 +11,11 @@
 #include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
-#include "byte.hpp"
-
 namespace intel_8085 {
 
 class SystemMemory {
 
-public:
+public: // Functions/Methods
     [[nodiscard]] auto operator[](const std::uint16_t index) noexcept -> std::uint8_t & { return memory_[index]; }
 
     [[nodiscard]] auto GetIterator(const std::uint16_t index = 0) noexcept
@@ -25,9 +23,9 @@ public:
         return index < memory_.size() ? memory_.begin() + index : nullptr;
     }
 
-    auto DumpContent(std::uint16_t startAddress, std::uint16_t endAddress, std::ostream &outStream) const noexcept
+    auto DumpMemoryContent(std::uint16_t startAddress, std::uint16_t endAddress, std::ostream &outStream) const noexcept
         -> void {
-        outStream << "Dumping the file content:\n";
+        outStream << "\nDumping the memory content:\n\n";
 
         constexpr const char *tableHeader
             = "Addr:   00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  ..ASCII Content.\n";
@@ -36,11 +34,10 @@ public:
         for (std::size_t rowIndex = startAddress / 0x10; rowIndex < (endAddress + 0x10) / 0x10; rowIndex++) {
             outStream << FormatTableRow(rowIndex * 0x10);
         }
+        outStream << "\nEnd of memory content:\n";
     }
 
-private:
-    std::array<std::uint8_t, 0x10000> memory_ { 0 };
-
+private: // Functions/Methods
     [[nodiscard]] inline auto GetPrintableChar(const char c) const noexcept -> char {
         return std::isprint(c) ? c : '.';
     }
@@ -62,6 +59,10 @@ private:
             memory_[rowStartingAddress + 0x0D], memory_[rowStartingAddress + 0x0E], memory_[rowStartingAddress + 0x0F],
             ss.str());
     }
+
+public:  // Data Members
+private: // Data Members
+    std::array<std::uint8_t, 0x10000> memory_ { 0 };
 };
 
 } // namespace intel_8085

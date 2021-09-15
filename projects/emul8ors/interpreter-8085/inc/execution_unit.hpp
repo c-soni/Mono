@@ -7,8 +7,10 @@ namespace intel_8085 {
 
 class ExecutionUnit {
 
-public:
-private:
+public:  // Functions/Methods
+private: // Functions/Methods
+public:  // Data Members
+private: // Data Members
 };
 
 } // namespace intel_8085
