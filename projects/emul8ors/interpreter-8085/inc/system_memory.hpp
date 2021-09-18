@@ -44,7 +44,7 @@ private: // Functions/Methods
 
     [[nodiscard]] auto FormatTableRow(std::size_t rowStartingAddress) const noexcept -> std::string {
         constexpr const char *tableFormat = "{:#06x}: {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} "
-                                            "{:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}  {:8}\n";
+                                            "{:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}  {:16}\n";
 
         std::stringstream ss;
         for (std::size_t iter = 0; iter < 0x10; iter++) {
