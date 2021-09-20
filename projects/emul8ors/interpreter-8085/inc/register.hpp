@@ -10,11 +10,11 @@ namespace intel_8085 {
 
 template <typename Data>
 class Register {
-
 public: // Functions/Methods
     Register(Data data) { data_ = data; }
 
-    auto SetContext(const SystemMemory &memory, const StatusRegister &status) -> void {
+    auto SetContext(const SystemMemory &memory, const StatusRegister &status) -> void
+    {
         memory_ = memory;
         status_ = status;
     }

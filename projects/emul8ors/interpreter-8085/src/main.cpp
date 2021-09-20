@@ -3,7 +3,8 @@
 #include "instruction_set.hpp"
 #include "processor.hpp"
 
-auto main(int argc, char **argv) -> int {
+auto main(int argc, char **argv) -> int
+{
     intel_8085::Processor processor;
     if (argc == 2) {
         bool success = processor.LoadProgram(argv[1]);

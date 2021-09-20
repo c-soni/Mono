@@ -12,10 +12,10 @@
 namespace intel_8085 {
 
 class Processor {
-
 public: // Functions/Methods
     // Processor()
-    Processor() {
+    Processor()
+    {
         a_.SetContext(systemMemory_, status_);
         b_.SetContext(systemMemory_, status_);
         c_.SetContext(systemMemory_, status_);
@@ -30,7 +30,8 @@ public: // Functions/Methods
     // ~Processor()
 
     // LoadProgram()
-    [[nodiscard]] auto LoadProgram(const std::string &filename) noexcept -> bool {
+    [[nodiscard]] auto LoadProgram(const std::string &filename) noexcept -> bool
+    {
         return ProgramLoader::Load(systemMemory_, filename);
     }
 
@@ -38,7 +39,8 @@ public: // Functions/Methods
 
     // DumpInfo()
     auto DumpInfo(std::uint16_t startAddress = 0x0000, std::uint16_t endAddress = 0xFFFF,
-        std::ostream &outStream = std::clog) const noexcept -> void {
+        std::ostream &outStream = std::clog) const noexcept -> void
+    {
         systemMemory_.DumpMemoryContent(startAddress, endAddress, outStream);
     }
 

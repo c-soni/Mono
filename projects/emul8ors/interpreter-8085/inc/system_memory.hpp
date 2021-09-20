@@ -14,17 +14,18 @@
 namespace intel_8085 {
 
 class SystemMemory {
-
 public: // Functions/Methods
     [[nodiscard]] auto operator[](const std::uint16_t index) noexcept -> std::uint8_t & { return memory_[index]; }
 
     [[nodiscard]] auto GetIterator(const std::uint16_t index = 0) noexcept
-        -> std::array<std::uint8_t, 0x10000>::iterator {
+        -> std::array<std::uint8_t, 0x10000>::iterator
+    {
         return index < memory_.size() ? memory_.begin() + index : nullptr;
     }
 
     auto DumpMemoryContent(std::uint16_t startAddress, std::uint16_t endAddress, std::ostream &outStream) const noexcept
-        -> void {
+        -> void
+    {
         outStream << "\nDumping the memory content:\n\n";
 
         constexpr const char *tableHeader
@@ -38,11 +39,13 @@ public: // Functions/Methods
     }
 
 private: // Functions/Methods
-    [[nodiscard]] inline auto GetPrintableChar(const char c) const noexcept -> char {
+    [[nodiscard]] inline auto GetPrintableChar(const char c) const noexcept -> char
+    {
         return std::isprint(c) ? c : '.';
     }
 
-    [[nodiscard]] auto FormatTableRow(std::size_t rowStartingAddress) const noexcept -> std::string {
+    [[nodiscard]] auto FormatTableRow(std::size_t rowStartingAddress) const noexcept -> std::string
+    {
         constexpr const char *tableFormat = "{:#06x}: {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} "
                                             "{:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}  {:16}\n";
 

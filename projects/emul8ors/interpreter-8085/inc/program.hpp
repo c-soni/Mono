@@ -23,7 +23,9 @@ struct Instruction {
     std::uint16_t operand2 = 0x0000;
 
     Instruction(std::uint16_t opcode, std::uint16_t operand1, std::uint16_t operand2)
-        : opcode(opcode), operand1(operand1), operand2(operand2) {}
+        : opcode(opcode), operand1(operand1), operand2(operand2)
+    {
+    }
 };
 
 struct CodeSection {

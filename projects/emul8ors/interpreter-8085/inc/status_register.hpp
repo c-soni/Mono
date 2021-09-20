@@ -6,7 +6,6 @@
 namespace intel_8085 {
 
 class StatusRegister {
-
 public: // Functions/Methods
     [[nodiscard]] constexpr auto GetSignBit() const noexcept -> bool { return flags_ & 0x80; }
 

@@ -15,9 +15,9 @@
 namespace intel_8085 {
 
 class ProgramLoader {
-
 public: // Functions/Methods
-    [[nodiscard]] static auto Load(SystemMemory &memory, const std::string &filename) noexcept -> bool {
+    [[nodiscard]] static auto Load(SystemMemory &memory, const std::string &filename) noexcept -> bool
+    {
         if (ValidateFileType(filename)) {
             spdlog::info("Loading program from file: {}", filename);
 
@@ -60,32 +60,35 @@ public: // Functions/Methods
         return false;
     }
 
-    [[nodiscard]] static auto LoadProgram(SystemMemory &memory, const Program &program) noexcept -> bool {
+    [[nodiscard]] static auto LoadProgram(SystemMemory &memory, const Program &program) noexcept -> bool
+    {
         return VerifyProgram(program) && LoadProgramIntoMemory(memory, program);
     }
 
 private: // Functions/Methods
-    [[nodiscard]] static auto LoadProgramIntoMemory(SystemMemory &memory, const Program &program) noexcept -> bool {
-        std::copy_n(program.dataSection.data.begin(), program.dataSection.data.size(),
+    [[nodiscard]] static auto LoadProgramIntoMemory(SystemMemory &memory, const Program &program) noexcept -> bool
+    {
+        std::copy(program.dataSection.data.begin(), program.dataSection.data.end(),
             memory.GetIterator(program.dataSection.startingAddress));
         std::vector<std::uint8_t> codeSectionCondensed;
         for (const auto &instruction : program.codeSection.instructions) {
             if (instruction.opcode & 0x0100) {
-                codeSectionCondensed.push_back(static_cast<uint8_t>(instruction.opcode & 0xFF));
+                codeSectionCondensed.push_back(static_cast<std::uint8_t>(instruction.opcode & 0xFF));
             }
             if (instruction.operand1 & 0x0100) {
-                codeSectionCondensed.push_back(static_cast<uint8_t>(instruction.operand1 & 0xFF));
+                codeSectionCondensed.push_back(static_cast<std::uint8_t>(instruction.operand1 & 0xFF));
             }
             if (instruction.operand2 & 0x0100) {
-                codeSectionCondensed.push_back(static_cast<uint8_t>(instruction.operand2 & 0xFF));
+                codeSectionCondensed.push_back(static_cast<std::uint8_t>(instruction.operand2 & 0xFF));
             }
         }
-        std::copy_n(codeSectionCondensed.begin(), codeSectionCondensed.size(),
+        std::copy(codeSectionCondensed.begin(), codeSectionCondensed.end(),
             memory.GetIterator(program.codeSection.startingAddress));
         return true;
     }
 
-    [[nodiscard]] static auto VerifyProgram(const Program &program) noexcept -> bool {
+    [[nodiscard]] static auto VerifyProgram(const Program &program) noexcept -> bool
+    {
         return program.dataSection.startingAddress >= 0x8000 && program.dataSection.startingAddress < 0xF000
             && program.dataSection.data.size() < 0xEFFF - 0x8000 && program.codeSection.startingAddress >= 0x1000
             && program.codeSection.startingAddress < 0x8000
@@ -94,53 +97,51 @@ private: // Functions/Methods
 
     // Owns the token queue passed in, will empty the queue before returning
     // Fills the program struct from the tokens passed in
-    [[nodiscard]] static auto CreateProgram(Program &program, std::queue<std::string> &tokens) noexcept -> bool {
+    [[nodiscard]] static auto CreateProgram(Program &program, std::queue<std::string> &tokens) noexcept -> bool
+    {
         return PopulateDataSection(program, tokens) && PopulateCodeSection(program, tokens);
     }
 
-    [[nodiscard]] static auto PopulateDataSection(Program &program, std::queue<std::string> &tokens) noexcept -> bool {
-        bool success = true;
-        if (tokens.front() == "data_begin") {
-            spdlog::debug("Found a data section, populating program struct");
-            tokens.pop();
-            success = PopulateSectionStartingAddress(program, tokens, SectionType::DataSection)
-                   && PopulateDataSectionBlock(program, tokens);
-            if (tokens.front() == "data_end") {
-                tokens.pop();
-            } else {
-                spdlog::error("Expected a data_end token");
-                success = false;
-            }
-        } else {
+    [[nodiscard]] static auto PopulateDataSection(Program &program, std::queue<std::string> &tokens) noexcept -> bool
+    {
+        if (tokens.front() != "data_begin") {
             spdlog::debug("Did not find a data section, skipping ahead to code section");
+            return true;
         }
-        return success;
+        spdlog::debug("Found a data section, populating program struct");
+        tokens.pop();
+        if (PopulateSectionStartingAddress(program, tokens, SectionType::DataSection)
+            && PopulateDataSectionBlock(program, tokens) && tokens.front() == "data_end") {
+            tokens.pop();
+            return true;
+        } else {
+            spdlog::error("Expected a data_end token");
+            return false;
+        }
     }
 
-    [[nodiscard]] static auto PopulateCodeSection(Program &program, std::queue<std::string> &tokens) noexcept -> bool {
-        bool success = true;
-        if (tokens.front() == "code_begin") {
-            spdlog::debug("Found a code section, populating program struct");
-            tokens.pop();
-            success = PopulateSectionStartingAddress(program, tokens, SectionType::CodeSection)
-                   && PopulateCodeSectionBlock(program, tokens);
-            if (tokens.front() == "code_end") {
-                tokens.pop();
-            } else {
-                spdlog::error("Expected a code_end token");
-                success = false;
-            }
-        } else {
+    [[nodiscard]] static auto PopulateCodeSection(Program &program, std::queue<std::string> &tokens) noexcept -> bool
+    {
+        if (tokens.front() != "code_begin") {
             spdlog::error("Code section not found, no program to execute");
-            success = false;
+            return false;
         }
-        return success;
+        spdlog::debug("Found a code section, populating program struct");
+        tokens.pop();
+        if (PopulateSectionStartingAddress(program, tokens, SectionType::CodeSection)
+            && PopulateCodeSectionBlock(program, tokens) && tokens.front() == "code_end") {
+            tokens.pop();
+            return true;
+        } else {
+            spdlog::error("Expected a code_end token");
+            return false;
+        }
     }
 
     [[nodiscard]] static auto PopulateSectionStartingAddress(
-        Program &program, std::queue<std::string> &tokens, SectionType sectionType) noexcept -> bool {
-        auto [success, val] = ConsumeWord(tokens);
-        if (success) {
+        Program &program, std::queue<std::string> &tokens, SectionType sectionType) noexcept -> bool
+    {
+        if (auto [success, val] = Consume<std::uint16_t>(tokens); success) {
             if (sectionType == SectionType::DataSection) {
                 program.dataSection.startingAddress = val;
             } else if (sectionType == SectionType::CodeSection) {
@@ -148,161 +149,138 @@ private: // Functions/Methods
             }
             spdlog::info("Successfully parsed section starting address");
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     [[nodiscard]] static auto PopulateDataSectionBlock(Program &program, std::queue<std::string> &tokens) noexcept
-        -> bool {
-        auto [result, length] = ConsumeWord(tokens);
-        if (result) {
-            bool retVal = true;
+        -> bool
+    {
+        if (auto [result, length] = Consume<std::uint16_t>(tokens); result) {
             for (std::uint16_t i = 0; i < length; i++) {
-                auto [res, val] = ConsumeByte(tokens);
-                if (res) {
-                    program.dataSection.data.push_back(val);
-                } else {
-                    retVal = false;
-                    break;
+                auto [res, val] = Consume<std::uint8_t>(tokens);
+                if (!res) {
+                    return false;
                 }
+                program.dataSection.data.push_back(val);
             }
-            return retVal;
-        } else {
-            return false;
+            return true;
         }
+        return false;
     }
 
     [[nodiscard]] static auto PopulateCodeSectionBlock(Program &program, std::queue<std::string> &tokens) noexcept
-        -> bool {
+        -> bool
+    {
         auto isHalt = [](const std::string &instruction) -> bool {
             return stringToInstruction.contains(instruction) && stringToInstruction.at(instruction) == opcodes::HLT;
         };
-        auto [result, instruction] = ParseInstruction(tokens);
-        if (result) {
+        if (auto [result, instruction] = ParseInstruction(tokens); result) {
             program.codeSection.instructions.push_back(instruction);
             while (!tokens.empty() && !isHalt(tokens.front())) {
                 auto [success, instruction] = ParseInstruction(tokens);
                 if (!success) {
                     return false;
-                } else {
-                    program.codeSection.instructions.push_back(instruction);
                 }
+                program.codeSection.instructions.push_back(instruction);
             }
-            if (!tokens.empty() && isHalt(tokens.front())) {
-                if (auto [res, hlt] = ParseInstruction(tokens); res) {
-                    program.codeSection.instructions.push_back(hlt);
-                } else {
-                    spdlog::error("Failure parsing HLT instruction: {}", tokens.front());
-                    return false;
-                }
-            } else {
+            if (tokens.empty() || !isHalt(tokens.front())) {
                 spdlog::error("Expected HLT instruction at the end of program");
                 return false;
             }
+            if (auto [res, hlt] = ParseInstruction(tokens); res) {
+                program.codeSection.instructions.push_back(hlt);
+            } else {
+                spdlog::error("Failure parsing HLT instruction: {}", tokens.front());
+                return false;
+            }
             return true;
-        } else {
-            spdlog::error("Failure processing instructions");
         }
-        return true;
+        spdlog::error("Failure processing instructions");
+        return false;
     }
 
     [[nodiscard]] static auto ParseInstruction(std::queue<std::string> &tokens) noexcept
-        -> std::tuple<bool, Instruction> {
-        if (!tokens.empty()) {
-            std::string_view instruction = tokens.front();
-            std::string_view opcode      = instruction;
-            std::string_view operand1;
-            std::string_view operand2;
+        -> std::tuple<bool, Instruction>
+    {
+        if (tokens.empty()) {
+            return { false, { 0, 0, 0 } };
+        }
+        std::string_view instruction = tokens.front();
+        std::string_view opcode      = instruction;
+        std::string_view operand1;
+        std::string_view operand2;
 
-            auto comma1 = instruction.find_first_of(",");
-            auto comma2 = instruction.find_last_of(",");
-            if (comma1 != instruction.npos) {
-                opcode.remove_suffix(instruction.size() - comma1);
-                instruction.remove_prefix(std::min(instruction.find_first_of(",") + 1, instruction.size()));
-                operand1 = instruction;
-            }
-            if (comma2 != instruction.npos && comma2 != comma1) {
-                operand1.remove_suffix(instruction.size() - comma2);
-                instruction.remove_prefix(std::min(instruction.find_first_of(",") + 1, instruction.size()));
-                operand2 = instruction;
-            }
-            const std::string opcodeString = { opcode.begin(), opcode.end() };
-            if (stringToInstruction.contains(opcodeString)) {
-                std::uint16_t opcodeData   = static_cast<std::uint16_t>(stringToInstruction.at(opcodeString)) | 0x0100;
-                std::uint16_t operand1Data = 0;
-                std::uint16_t operand2Data = 0;
-                if (operand1.length() > 0) {
-                    if (auto [success, val] = ParseByte({ operand1.begin(), operand1.end() }); success) {
-                        operand1Data = static_cast<std::uint16_t>(val) | 0x0100;
-                    } else {
-                        return { false, { 0, 0, 0 } };
-                    }
-                }
-                if (operand2.length() > 0) {
-                    if (auto [success, val] = ParseByte({ operand2.begin(), operand2.end() }); success) {
-                        operand2Data = static_cast<std::uint16_t>(val) | 0x0100;
-                    } else {
-                        return { false, { 0, 0, 0 } };
-                    }
-                }
-                tokens.pop();
-                return { true, { opcodeData, operand1Data, operand2Data } };
+        auto comma1 = instruction.find_first_of(",");
+        auto comma2 = instruction.find_last_of(",");
+        if (comma1 != instruction.npos) {
+            opcode.remove_suffix(instruction.size() - comma1);
+            instruction.remove_prefix(std::min(instruction.find_first_of(",") + 1, instruction.size()));
+            operand1 = instruction;
+        }
+        if (comma2 != instruction.npos && comma2 != comma1) {
+            operand1.remove_suffix(instruction.size() - comma2);
+            instruction.remove_prefix(std::min(instruction.find_first_of(",") + 1, instruction.size()));
+            operand2 = instruction;
+        }
+
+        const std::string opcodeString = { opcode.begin(), opcode.end() };
+        if (!stringToInstruction.contains(opcodeString)) {
+            spdlog::error("Invalid instruction: {}", opcodeString);
+        }
+
+        std::uint16_t opcodeData   = static_cast<std::uint16_t>(stringToInstruction.at(opcodeString)) | 0x0100;
+        std::uint16_t operand1Data = 0;
+        std::uint16_t operand2Data = 0;
+
+        if (operand1.length() > 0) {
+            if (auto [success, val] = Parse<std::uint8_t>({ operand1.begin(), operand1.end() }); success) {
+                operand1Data = static_cast<std::uint16_t>(val) | 0x0100;
             } else {
-                spdlog::error("Invalid instruction: {}", opcodeString);
+                return { false, { 0, 0, 0 } };
             }
         }
-        return { false, { 0, 0, 0 } };
+        if (operand2.length() > 0) {
+            if (auto [success, val] = Parse<std::uint8_t>({ operand2.begin(), operand2.end() }); success) {
+                operand2Data = static_cast<std::uint16_t>(val) | 0x0100;
+            } else {
+                return { false, { 0, 0, 0 } };
+            }
+        }
+
+        tokens.pop();
+        return { true, { opcodeData, operand1Data, operand2Data } };
     }
 
-    [[nodiscard]] static auto ConsumeByte(std::queue<std::string> &tokens) noexcept -> std::tuple<bool, std::uint8_t> {
-        auto [res, val] = ParseByte(tokens.front());
+    template <typename Data>
+    [[nodiscard]] static auto Consume(std::queue<std::string> &tokens) noexcept -> std::tuple<bool, Data>
+    {
+        auto [res, val] = Parse<Data>(tokens.front());
         if (res) {
             tokens.pop();
         }
         return { res, val };
     }
 
-    [[nodiscard]] static auto ConsumeWord(std::queue<std::string> &tokens) noexcept -> std::tuple<bool, std::uint16_t> {
-        auto [res, val] = ParseWord(tokens.front());
-        if (res) {
-            tokens.pop();
-        }
-        return { res, val };
-    }
-
-    [[nodiscard]] static auto ParseByte(const std::string &data) noexcept -> std::tuple<bool, std::uint8_t> {
+    template <typename Data>
+    [[nodiscard]] static auto Parse(const std::string &data) noexcept -> std::tuple<bool, Data>
+    {
         try {
             const unsigned long val = std::stoul(data, nullptr, 0);
-            if (val < 0x100) {
-                return { true, static_cast<std::uint8_t>(val) };
-            } else {
-                spdlog::error("Parsed Value {} (hex: {:#x}) cannot be fit into 8 bits", val, val);
+            if (val >= 1 << sizeof(Data) * 8) {
+                spdlog::error("Parsed Value {} (hex: {:#x}) cannot be fit into {} bytes", val, val, sizeof(Data));
                 return { false, 0x00 };
             }
+            return { true, static_cast<Data>(val) };
         } catch (...) {
             spdlog::error("Error parsing byte from string {}", data);
             return { false, 0x00 };
         }
     }
 
-    [[nodiscard]] static auto ParseWord(const std::string &data) noexcept -> std::tuple<bool, std::uint16_t> {
-        try {
-            const unsigned long val = std::stoul(data, nullptr, 0);
-            if (val < 0x10000) {
-                return { true, static_cast<std::uint16_t>(val) };
-            } else {
-                spdlog::error("Parsed Value {} (hex: {:#x}) cannot be fit into 16-bits", val, val);
-                return { false, 0x00 };
-            }
-        } catch (...) {
-            spdlog::error("Error parsing word from string {}", data);
-            return { false, 0x00 };
-        }
-    }
-
     [[maybe_unused]] static auto TokenizeLine(const std::string &line, std::queue<std::string> &tokens,
-        const std::string_view delims = " \t", const std::string_view skipLineToken = "//") noexcept -> bool {
+        const std::string_view delims = " \t", const std::string_view skipLineToken = "//") noexcept -> bool
+    {
         auto temp    = DropComment(line, skipLineToken);
         auto lineEnd = temp.end();
         auto tempIt  = temp.begin();
@@ -318,25 +296,26 @@ private: // Functions/Methods
     }
 
     [[nodiscard]] static auto DropComment(std::string_view line, const std::string_view skipLineToken) noexcept
-        -> std::string_view {
-        const auto commentStart = line.find(skipLineToken);
-        if (commentStart != line.npos) {
+        -> std::string_view
+    {
+        if (const auto commentStart = line.find(skipLineToken); commentStart != line.npos) {
             line.remove_suffix(line.size() - commentStart);
         }
         return line;
     }
 
     [[nodiscard]] static auto TrimLine(std::string_view line, const std::string_view delims) noexcept
-        -> std::string_view {
+        -> std::string_view
+    {
         line.remove_prefix(std::min(line.find_first_not_of(delims), line.size()));
-        const auto trimPos = line.find_first_of(delims);
-        if (trimPos != line.npos) {
+        if (const auto trimPos = line.find_first_of(delims); trimPos != line.npos) {
             line.remove_suffix(line.size() - trimPos);
         }
         return line;
     }
 
-    [[nodiscard]] static auto ValidateFileType(const std::string &filename) noexcept -> bool {
+    [[nodiscard]] static auto ValidateFileType(const std::string &filename) noexcept -> bool
+    {
         return std::filesystem::exists(filename) && filename.ends_with(".program");
     }
 
