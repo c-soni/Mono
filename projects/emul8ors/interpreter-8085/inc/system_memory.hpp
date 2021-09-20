@@ -39,7 +39,7 @@ public: // Functions/Methods
     }
 
 private: // Functions/Methods
-    [[nodiscard]] inline auto GetPrintableChar(const char c) const noexcept -> char
+    [[nodiscard]] inline auto GetPrintableChar(const unsigned char c) const noexcept -> unsigned char
     {
         return std::isprint(c) ? c : '.';
     }
@@ -51,7 +51,7 @@ private: // Functions/Methods
 
         std::stringstream ss;
         for (std::size_t iter = 0; iter < 0x10; iter++) {
-            ss << GetPrintableChar(static_cast<char>(memory_[rowStartingAddress + iter]));
+            ss << GetPrintableChar(static_cast<unsigned char>(memory_[rowStartingAddress + iter]));
         }
 
         return fmt::format(tableFormat, rowStartingAddress, memory_[rowStartingAddress + 0x00],
