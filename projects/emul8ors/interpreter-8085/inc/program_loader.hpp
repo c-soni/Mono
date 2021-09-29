@@ -2,6 +2,7 @@
 #define INTERPRETER_8085_PROGRAM_LOADER_HPP
 
 #include <filesystem>
+#include <optional>
 #include <queue>
 #include <sstream>
 #include <string>
@@ -141,70 +142,72 @@ private: // Functions/Methods
     [[nodiscard]] static auto PopulateSectionStartingAddress(
         Program &program, std::queue<std::string> &tokens, SectionType sectionType) noexcept -> bool
     {
-        if (auto [success, val] = Consume<std::uint16_t>(tokens); success) {
-            if (sectionType == SectionType::DataSection) {
-                program.dataSection.startingAddress = val;
-            } else if (sectionType == SectionType::CodeSection) {
-                program.codeSection.startingAddress = val;
-            }
-            spdlog::info("Successfully parsed section starting address");
-            return true;
+        auto val = Consume<std::uint16_t>(tokens);
+        if (!val.has_value()) {
+            return false;
         }
-        return false;
+        if (sectionType == SectionType::DataSection) {
+            program.dataSection.startingAddress = val.value();
+        } else if (sectionType == SectionType::CodeSection) {
+            program.codeSection.startingAddress = val.value();
+        }
+        spdlog::info("Successfully parsed section starting address");
+        return true;
     }
 
     [[nodiscard]] static auto PopulateDataSectionBlock(Program &program, std::queue<std::string> &tokens) noexcept
         -> bool
     {
-        if (auto [result, length] = Consume<std::uint16_t>(tokens); result) {
-            for (std::uint16_t i = 0; i < length; i++) {
-                auto [res, val] = Consume<std::uint8_t>(tokens);
-                if (!res) {
-                    return false;
-                }
-                program.dataSection.data.push_back(val);
-            }
-            return true;
+        auto length = Consume<std::uint16_t>(tokens);
+        if (!length.has_value()) {
+            return false;
         }
-        return false;
+        for (std::uint16_t i = 0; i < length.value(); i++) {
+            auto val = Consume<std::uint8_t>(tokens);
+            if (!val.has_value()) {
+                return false;
+            }
+            program.dataSection.data.push_back(val.value());
+        }
+        return true;
     }
 
     [[nodiscard]] static auto PopulateCodeSectionBlock(Program &program, std::queue<std::string> &tokens) noexcept
         -> bool
     {
+        auto firstInstruction = ParseInstruction(tokens);
+        if (!firstInstruction.has_value()) {
+            spdlog::error("Failure processing instructions");
+            return false;
+        }
         auto isHalt = [](const std::string &instruction) -> bool {
             return stringToInstruction.contains(instruction) && stringToInstruction.at(instruction) == opcodes::HLT;
         };
-        if (auto [result, instruction] = ParseInstruction(tokens); result) {
-            program.codeSection.instructions.push_back(instruction);
-            while (!tokens.empty() && !isHalt(tokens.front())) {
-                auto [success, instruction] = ParseInstruction(tokens);
-                if (!success) {
-                    return false;
-                }
-                program.codeSection.instructions.push_back(instruction);
-            }
-            if (tokens.empty() || !isHalt(tokens.front())) {
-                spdlog::error("Expected HLT instruction at the end of program");
+        program.codeSection.instructions.push_back(firstInstruction.value());
+        while (!tokens.empty() && !isHalt(tokens.front())) {
+            auto instruction = ParseInstruction(tokens);
+            if (!instruction.has_value()) {
                 return false;
             }
-            if (auto [res, hlt] = ParseInstruction(tokens); res) {
-                program.codeSection.instructions.push_back(hlt);
-            } else {
-                spdlog::error("Failure parsing HLT instruction: {}", tokens.front());
-                return false;
-            }
-            return true;
+            program.codeSection.instructions.push_back(instruction.value());
         }
-        spdlog::error("Failure processing instructions");
-        return false;
+        if (tokens.empty() || !isHalt(tokens.front())) {
+            spdlog::error("Expected HLT instruction at the end of program");
+            return false;
+        }
+        auto halt = ParseInstruction(tokens);
+        if (!halt.has_value()) {
+            spdlog::error("Failure parsing HLT instruction: {}", tokens.front());
+            return false;
+        }
+        program.codeSection.instructions.push_back(halt.value());
+        return true;
     }
 
-    [[nodiscard]] static auto ParseInstruction(std::queue<std::string> &tokens) noexcept
-        -> std::tuple<bool, Instruction>
+    [[nodiscard]] static auto ParseInstruction(std::queue<std::string> &tokens) noexcept -> std::optional<Instruction>
     {
         if (tokens.empty()) {
-            return { false, { 0, 0, 0 } };
+            return std::nullopt;
         }
         std::string_view instruction = tokens.front();
         std::string_view opcode      = instruction;
@@ -234,47 +237,47 @@ private: // Functions/Methods
         std::uint16_t operand2Data = 0;
 
         if (operand1.length() > 0) {
-            if (auto [success, val] = Parse<std::uint8_t>({ operand1.begin(), operand1.end() }); success) {
-                operand1Data = static_cast<std::uint16_t>(val) | 0x0100;
-            } else {
-                return { false, { 0, 0, 0 } };
+            auto val = Parse<std::uint8_t>({ operand1.begin(), operand1.end() });
+            if (!val.has_value()) {
+                return std::nullopt;
             }
+            operand1Data = static_cast<std::uint16_t>(val.value()) | 0x0100;
         }
         if (operand2.length() > 0) {
-            if (auto [success, val] = Parse<std::uint8_t>({ operand2.begin(), operand2.end() }); success) {
-                operand2Data = static_cast<std::uint16_t>(val) | 0x0100;
-            } else {
-                return { false, { 0, 0, 0 } };
+            auto val = Parse<std::uint8_t>({ operand2.begin(), operand2.end() });
+            if (!val.has_value()) {
+                return std::nullopt;
             }
+            operand2Data = static_cast<std::uint16_t>(val.value()) | 0x0100;
         }
 
         tokens.pop();
-        return { true, { opcodeData, operand1Data, operand2Data } };
+        return { { opcodeData, operand1Data, operand2Data } };
     }
 
     template <typename Data>
-    [[nodiscard]] static auto Consume(std::queue<std::string> &tokens) noexcept -> std::tuple<bool, Data>
+    [[nodiscard]] static auto Consume(std::queue<std::string> &tokens) noexcept -> std::optional<Data>
     {
-        auto [res, val] = Parse<Data>(tokens.front());
-        if (res) {
+        auto val = Parse<Data>(tokens.front());
+        if (val.has_value()) {
             tokens.pop();
         }
-        return { res, val };
+        return val;
     }
 
     template <typename Data>
-    [[nodiscard]] static auto Parse(const std::string &data) noexcept -> std::tuple<bool, Data>
+    [[nodiscard]] static auto Parse(const std::string &data) noexcept -> std::optional<Data>
     {
         try {
             const unsigned long val = std::stoul(data, nullptr, 0);
             if (val >= 1 << sizeof(Data) * 8) {
                 spdlog::error("Parsed Value {} (hex: {:#x}) cannot be fit into {} bytes", val, val, sizeof(Data));
-                return { false, 0x00 };
+                return std::nullopt;
             }
-            return { true, static_cast<Data>(val) };
+            return { static_cast<Data>(val) };
         } catch (...) {
             spdlog::error("Error parsing byte from string {}", data);
-            return { false, 0x00 };
+            return std::nullopt;
         }
     }
 
