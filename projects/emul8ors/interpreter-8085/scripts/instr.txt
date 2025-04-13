@@ -1,9 +1,0 @@
-data_begin
-0x8000      // Starting address for data section
-0x05        // 5 bytes of data
-0x31        // ASCII code for '1'
-0x32        // ASCII code for '2'
-0x33        // ASCII code for '3'
-0x34        // ASCII code for '4'
-0x35        // ASCII code for '5'
-data_end
